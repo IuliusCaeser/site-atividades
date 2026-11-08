@@ -1,6 +1,115 @@
 {
-  "generated_at": "2026-11-08T17:28:55.722Z",
-  "checked": 0,
-  "broken": 0,
-  "errors": []
+  "generated_at": "2026-11-08T17:54:45.104Z",
+  "checked": 147,
+  "broken": 18,
+  "errors": [
+    {
+      "tag_id": "CBE_001",
+      "link_key": "806e632643",
+      "motivo": "Falha: ENOTFOUND",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "CBE_002",
+      "link_key": "0d88e3e49e",
+      "motivo": "Falha: ENOTFOUND",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_001",
+      "link_key": "ac3568a2bd",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_002",
+      "link_key": "ac3568a2bd",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_005",
+      "link_key": "0e54c32f02",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_007",
+      "link_key": "0e54c32f02",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_008",
+      "link_key": "0e54c32f02",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_010",
+      "link_key": "ddc91a9d94",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_011",
+      "link_key": "ddc91a9d94",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_012",
+      "link_key": "ddc91a9d94",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_015",
+      "link_key": "ac3568a2bd",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_005",
+      "link_key": "985e5cddf3",
+      "motivo": "HTTP 404",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_010",
+      "link_key": "1f82618e15",
+      "motivo": "Falha: tempo esgotado",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_011",
+      "link_key": "1f82618e15",
+      "motivo": "Falha: tempo esgotado",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_015",
+      "link_key": "3285673a45",
+      "motivo": "Falha: UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_016",
+      "link_key": "683457fe88",
+      "motivo": "Falha: UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "SE_004",
+      "link_key": "aeec0077ef",
+      "motivo": "HTTP 404",
+      "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "SE_018",
+      "link_key": "6ecade7006",
+      "motivo": "Falha: ENOTFOUND",
+      "desde": "2026-11-08T17:54:45.104Z"
+    }
+  ]
 }
