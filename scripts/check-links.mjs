@@ -5,9 +5,11 @@
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const KEY = process.env.SUPABASE_ANON_KEY || '';
+const TOKEN = process.env.LINK_CHECK_TOKEN || '';
 const OUT = process.env.LOG_PATH || 'data/link-errors.json';
 const TIMEOUT_MS = 15000;
 const CONCURRENCY = 8;
@@ -15,21 +17,21 @@ const UA = 'Mozilla/5.0 (compatible; GuiaAtividadesLinkChecker/1.0)';
 // Respostas "inconclusivas": o site existe, mas bloqueia robôs. Não contam como erro.
 const INCONCLUSIVE = new Set([401, 403, 405, 429, 999]);
 
-if (!SUPABASE_URL || !KEY) {
-  console.error('Defina SUPABASE_URL e SUPABASE_ANON_KEY (Secrets do repositório).');
+if (!SUPABASE_URL || !KEY || !TOKEN) {
+  console.error('Defina SUPABASE_URL, SUPABASE_ANON_KEY e LINK_CHECK_TOKEN (Secrets do repositório).');
   process.exit(1);
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchItems() {
-  const headers = { apikey: KEY, 'Range-Unit': 'items' };
-  if (KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${KEY}`; // chaves antigas (JWT)
-  const out = [];
-  const size = 1000;
-  for (let from = 0; ; from += size) {
-    const url = `${SUPABASE_URL}/rest/v1/atividades?select=tag_id,nome_principal,link_referencia&order=tag_id`;
-    const r = await fetch(url, { headers: { ...headers, Range: `${from}-${from + size - 1}` } });
+  // `atividades` não é pública: lemos via função protegida por token.
+  const headers = { apikey: KEY, 'content-type': 'application/json' };
+  if (KEY.startsWith('eyJ')) headers.Authorization = `Bearer ${KEY}`;
+  const out = [], size = 1000;
+  for (let offset = 0; ; offset += size) {
+    const url = `${SUPABASE_URL}/rest/v1/rpc/links_para_checagem?limit=${size}&offset=${offset}`;
+    const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ p_token: TOKEN }) });
     if (!r.ok) throw new Error(`Supabase respondeu ${r.status}: ${await r.text()}`);
     const rows = await r.json();
     out.push(...rows);
@@ -76,6 +78,7 @@ async function check(url) {
 }
 
 const isBroken = (res) => (res.error ? true : INCONCLUSIVE.has(res.status) ? false : res.status >= 400);
+const urlKey = (url) => createHash('sha256').update(url).digest('hex').slice(0, 10);
 const reason = (res) => (res.error ? `Falha: ${res.error}` : `HTTP ${res.status}`);
 
 async function pool(list, worker, n) {
@@ -100,7 +103,7 @@ async function main() {
   let previous = {};
   try {
     const old = JSON.parse(await readFile(OUT, 'utf8'));
-    for (const e of old.errors || []) previous[`${e.tag_id}|${e.url}`] = e.desde;
+    for (const e of old.errors || []) previous[`${e.tag_id}|${e.link_key}`] = e.desde;
   } catch {}
 
   const now = new Date().toISOString();
@@ -108,20 +111,16 @@ async function main() {
   for (const { it, url } of pairs) {
     const res = verdict.get(url);
     if (!isBroken(res)) continue;
-    errors.push({
-      tag_id: it.tag_id,
-      nome: it.nome_principal,
-      url,
-      motivo: reason(res),
-      desde: previous[`${it.tag_id}|${url}`] || now,
-    });
+    // repo público: o log não leva nome nem URL (o site já os tem após o login)
+    const link_key = urlKey(url);
+    errors.push({ tag_id: it.tag_id, link_key, motivo: reason(res), desde: previous[`${it.tag_id}|${link_key}`] || now });
   }
 
   const payload = { generated_at: now, checked: unique.length, broken: errors.length, errors };
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, JSON.stringify(payload, null, 2) + '\n');
   console.log(`Concluído: ${errors.length} link(s) com problema.`);
-  errors.forEach((e) => console.log(` - [${e.tag_id}] ${e.nome}: ${e.url} (${e.motivo})`));
+  errors.forEach((e) => console.log(` - [${e.tag_id}] (${e.motivo})`));
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
