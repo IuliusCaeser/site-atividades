@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de Atividades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  /* Slider duplo de preço */
+  .dual { position: relative; height: 28px; }
+  .dual .track, .dual .fill { position: absolute; top: 12px; height: 4px; border-radius: 9999px; }
+  .dual .track { left: 0; right: 0; background: #e2e8f0; }
+  .dual .fill { background: linear-gradient(90deg, #6366f1, #d946ef); }
+  .dual input[type=range] { position: absolute; left: 0; top: 0; width: 100%; height: 28px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+  .dual input[type=range]::-webkit-slider-runnable-track { background: transparent; }
+  .dual input[type=range]::-moz-range-track { background: transparent; }
+  .dual input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid #6366f1; cursor: grab; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .dual input[type=range]::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #6366f1; cursor: grab; }
+  .thin::-webkit-scrollbar { width: 6px; }
+  .thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+  .pop { animation: pop .18s ease-out; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin .8s linear infinite; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+<!-- Cabeçalho -->
+<header class="sticky top-0 z-30 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="text-2xl">🧭</div>
+    <div class="min-w-0">
+      <h1 class="font-extrabold text-lg leading-tight tracking-tight">Guia de Atividades</h1>
+      <p class="text-xs text-white/75 hidden sm:block">Filtre, avalie e ranqueie — tudo salvo na nuvem</p>
+    </div>
+    <div class="ml-auto flex items-center gap-2 sm:gap-3">
+      <div id="sync" class="flex items-center gap-2 text-xs bg-white/15 rounded-full px-3 py-1.5">
+        <span id="syncDot" class="w-2 h-2 rounded-full bg-slate-300"></span><span id="syncTxt">Conectando…</span>
+      </div>
+      <button id="btnImport" class="text-sm font-semibold bg-white text-indigo-700 hover:bg-indigo-50 rounded-full px-4 py-1.5 shadow transition">⬆ Importar CSV</button>
+      <input id="fileInput" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" class="hidden">
+    </div>
+  </div>
+</header>
+
+<!-- Barra de aviso de links quebrados -->
+<div id="banner"></div>
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+  <!-- Abas principais -->
+  <nav class="flex gap-2 mb-6 bg-white rounded-2xl p-1.5 border border-slate-200 w-fit shadow-sm">
+    <button data-act="tab" data-v="explorar" id="tab-explorar" class="px-5 py-2 rounded-xl text-sm font-semibold transition">🔎 Explorar</button>
+    <button data-act="tab" data-v="listas" id="tab-listas" class="px-5 py-2 rounded-xl text-sm font-semibold transition">📚 Minhas Listas</button>
+  </nav>
+
+  <!-- ===== EXPLORAR ===== -->
+  <section id="view-explorar" class="grid lg:grid-cols-[320px_1fr] gap-6">
+    <aside id="filters" class="hidden lg:block">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-6 lg:sticky lg:top-24 max-h-[calc(100vh-7rem)] overflow-auto thin">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold">Filtros</h2>
+          <button data-act="clear" class="text-xs font-semibold text-indigo-600 hover:underline">Limpar tudo</button>
+        </div>
+
+        <!-- Preço -->
+        <div>
+          <h3 class="text-sm font-semibold mb-2">💰 Preço</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="text-xs text-slate-500">Mínimo (R$)
+              <input id="nMin" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 outline-none"></label>
+            <label class="text-xs text-slate-500">Máximo (R$)
+              <input id="nMax" type="number" min="0" step="1" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-400 outline-none"></label>
+          </div>
+          <div class="dual mt-4">
+            <div class="track"></div><div class="fill" id="fill"></div>
+            <input id="rMin" type="range" min="0" value="0">
+            <input id="rMax" type="range" min="0" value="0">
+          </div>
+          <p id="priceLabel" class="text-sm font-semibold text-indigo-700 mt-1"></p>
+          <label class="flex items-center gap-2 text-xs text-slate-600 mt-2">
+            <input id="semPreco" type="checkbox" checked class="rounded text-indigo-600"> Incluir atividades sem preço informado
+          </label>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold">🏷️ Tags</h3>
+            <div class="flex text-xs bg-slate-100 rounded-lg p-0.5">
+              <button data-act="mode" data-v="AND" id="mode-AND" class="px-2.5 py-1 rounded-md font-semibold">Todas</button>
+              <button data-act="mode" data-v="OR" id="mode-OR" class="px-2.5 py-1 rounded-md font-semibold">Qualquer</button>
+            </div>
+          </div>
+          <input id="tagSearch" type="search" placeholder="Buscar tag…" class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm mb-3 focus:ring-2 focus:ring-indigo-400 outline-none">
+          <div id="tagBox" class="flex flex-wrap gap-1.5 max-h-72 overflow-auto thin"></div>
+        </div>
+      </div>
+    </aside>
+
+    <div>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <div class="relative flex-1 min-w-[200px]">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          <input id="q" type="search" placeholder="Buscar por nome, endereço, ideia…" class="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+        </div>
+        <select id="sort" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400">
+          <option value="nome">Nome (A–Z)</option>
+          <option value="preco_asc">Preço: menor primeiro</option>
+          <option value="preco_desc">Preço: maior primeiro</option>
+          <option value="nota">Melhor avaliadas</option>
+        </select>
+        <button data-act="filters" class="lg:hidden rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5">⚙ Filtros</button>
+      </div>
+      <p id="count" class="text-sm text-slate-500 mb-3"></p>
+      <div id="grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+    </div>
+  </section>
+
+  <!-- ===== MINHAS LISTAS ===== -->
+  <section id="view-listas" class="hidden">
+    <div id="subtabs" class="flex flex-wrap gap-2 mb-5"></div>
+    <div id="listBody" class="space-y-2 max-w-3xl"></div>
+  </section>
+</main>
+
+<!-- Modal de detalhes -->
+<div id="modal" class="hidden fixed inset-0 z-50">
+  <div data-act="close" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+  <div class="absolute inset-0 grid place-items-center p-3 sm:p-6 pointer-events-none">
+    <div id="modalBody" class="pop pointer-events-auto bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-full overflow-auto thin"></div>
+  </div>
+</div>
+
+<div id="toasts" class="fixed bottom-4 right-4 z-[60] space-y-2"></div>
+
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO  — troque pelos dados do SEU projeto Supabase
+   (Supabase > Project Settings > API)
+   ===================================================================== */
+const SUPABASE_URL      = 'sb_publishable_Tvw3t4E3jmn76HCl22w2gQ_F6M7KgmB';
+const SUPABASE_ANON_KEY = 'https://copyvwynpguoabftmnac.supabase.co';
+const LINK_LOG_URL      = 'data/link-errors.json'; // gerado pelo GitHub Actions
+const CIDADE            = 'São Carlos';             // usada no botão do Google Maps
+
+/* Dicionário editável: restaura acentos nas tags (que vêm sem acento no CSV) */
+const ACENTOS = {
+  cafe:'café', historia:'história', musica:'música', familia:'família', crianca:'criança', criancas:'crianças',
+  gratis:'grátis', economico:'econômico', romantico:'romântico', ciencia:'ciência', exposicao:'exposição',
+  regiao:'região', saude:'saúde', agua:'água', nao:'não', pe:'pé', sao:'são', opcao:'opção', diversao:'diversão',
+  academico:'acadêmico', pratica:'prática', gastronomia:'gastronomia', tecnologia:'tecnologia', ultimo:'último',
+  proximo:'próximo', facil:'fácil', dificil:'difícil', publico:'público', rapido:'rápido', unico:'único',
+  tranquilo:'tranquilo', cultura:'cultura', educacao:'educação', recreacao:'recreação', animacao:'animação',
+  aventura:'aventura', cenico:'cênico', historico:'histórico', artistico:'artístico', jardim:'jardim', ceu:'céu',
+  pizzaria:'pizzaria', sorvete:'sorvete', cha:'chá', alcool:'álcool', genero:'gênero', cinema:'cinema', pao:'pão',
+};
+const MINUSCULAS = new Set(['de','da','do','das','dos','e','em','na','no','nas','nos','a','o','para','com','ao','ou']);
+
+/* ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+const normKey = h => strip(h).trim().toLowerCase().replace(/\s+/g, '_');
+const fmtMoney = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const isEmpty = v => { const s = String(v ?? '').trim().toLowerCase(); return !s || s === 'tag_na' || s === '-' || s === '-1'; };
+const configured = !SUPABASE_URL.includes('SEU-PROJETO') && !SUPABASE_ANON_KEY.includes('SUA_CHAVE');
+
+let sb = null;
+const state = {
+  items: [], byId: new Map(), inter: new Map(), tags: new Map(),
+  selTags: new Set(), mode: 'AND', q: '', sort: 'nome', tagQ: '',
+  bound: 100, pMin: 0, pMax: 100, semPreco: true, limit: 60,
+  tab: 'explorar', lista: 'favoritos', openId: null,
+  broken: new Map(), checkedAt: null, bannerOpen: false, bannerDismissed: false,
+};
+
+/* ---------- Parser CSV/TSV (detecta delimitador) ---------- */
+function parseDelimited(text) {
+  text = text.replace(/^﻿/, '');
+  const first = text.split(/\r?\n/, 1)[0] || '';
+  const count = ch => (first.match(new RegExp(ch === '\t' ? '\\t' : '\\' + ch, 'g')) || []).length;
+  const tabs = count('\t'), commas = count(','), semis = count(';');
+  const delim = tabs >= commas && tabs >= semis && tabs > 0 ? '\t' : (semis > commas ? ';' : ',');
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"' && cur === '') q = true;
+    else if (c === delim) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur); cur = ''; rows.push(row); row = []; }
+    else cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim() !== ''));
+}
+
+function parsePrice(v) {
+  let s = String(v ?? '').replace(/[^\d,.\-]/g, '');
+  if (!s || s === '-') return -1;
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : -1;
+}
+function priceRange(a, b) {
+  if (a < 0 && b < 0) return null;
+  if (a < 0) a = b; if (b < 0) b = a;
+  return a > b ? [b, a] : [a, b];
+}
+
+/* ---------- Tags ---------- */
+function tagKey(raw) {
+  const s = strip(raw).trim().toLowerCase().replace(/\s+/g, '_');
+  if (!s || s === 'tag_na') return '';
+  return s.replace(/^tag_/, '');
+}
+function tagLabel(key) {
+  return key.split('_').filter(Boolean).map((w, i) => {
+    const lw = ACENTOS[w] || w;
+    return (i > 0 && MINUSCULAS.has(lw)) ? lw : lw.charAt(0).toUpperCase() + lw.slice(1);
+  }).join(' ');
+}
+function extractTags(d) {
+  const set = new Set();
+  for (const [k, v] of Object.entries(d)) {
+    if (!k.startsWith('tag_') || k === 'tag_id') continue;      // tag_id é identificador, não filtro
+    String(v ?? '').split(/[;|]/).forEach(p => { const t = tagKey(p); if (t) set.add(t); });
+  }
+  return set;
+}
+
+/* ---------- Supabase ---------- */
+async function fetchAll(table, order) {
+  const out = [], size = 1000;
+  for (let from = 0; ; from += size) {
+    const { data, error } = await sb.from(table).select('*').order(order).range(from, from + size - 1);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < size) break;
+  }
+  return out;
+}
+
+function buildItems(rows) {
+  state.items = []; state.byId = new Map(); state.tags = new Map();
+  for (const r of rows) {
+    const d = r.dados || {};
+    const a = Number(r.preco_min), b = Number(r.preco_max);
+    const it = {
+      id: r.tag_id, nome: r.nome_principal || r.tag_id, d,
+      regiaoRaw: d.tag_regiao ?? r.tag_regiao, link: r.link_referencia,
+      tags: extractTags(d), pr: priceRange(Number.isFinite(a) ? a : -1, Number.isFinite(b) ? b : -1),
+    };
+    it.search = strip([it.nome, d.texto_endereco, d.tipo_bruto_texto, d.item_referencia_texto, d.texto_ideia, d.texto_complemento].join(' ')).toLowerCase();
+    state.items.push(it); state.byId.set(it.id, it);
+    it.tags.forEach(t => {
+      const e = state.tags.get(t) || { key: t, label: tagLabel(t), count: 0 };
+      e.count++; state.tags.set(t, e);
+    });
+  }
+  state.items.sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
+  let mx = 0; state.items.forEach(it => { if (it.pr && it.pr[1] > mx) mx = it.pr[1]; });
+  state.bound = Math.max(10, Math.ceil(mx));
+  state.pMin = 0; state.pMax = state.bound;
+  state.selTags = new Set([...state.selTags].filter(t => state.tags.has(t)));
+  setupSlider();
+}
+
+async function loadInter() {
+  const rows = await fetchAll('interacoes', 'tag_id');
+  state.inter = new Map(rows.map(r => [r.tag_id, r]));
+}
+
+async function reloadAll() {
+  setSync('loading');
+  try {
+    const acts = await fetchAll('atividades', 'tag_id');
+    buildItems(acts);
+    await loadInter();
+    setSync('ok');
+  } catch (e) {
+    console.error(e); setSync('error'); toast('Falha ao carregar: ' + (e.message || e), 'err');
+  }
+  renderAll();
+}
+
+/* ---------- Interações ---------- */
+const blankI = id => ({ tag_id: id, nota: 0, ja_fez: false, quero_fazer: false, prioridade: null, favorito: false, odiado: false });
+const getI = id => state.inter.get(id) || blankI(id);
+const pickI = r => ({ tag_id: r.tag_id, nota: r.nota, ja_fez: r.ja_fez, quero_fazer: r.quero_fazer, prioridade: r.prioridade, favorito: r.favorito, odiado: r.odiado });
+
+async function commit(rows) {
+  if (!rows.length) return;
+  const now = new Date().toISOString();
+  rows.forEach(r => state.inter.set(r.tag_id, { ...r, updated_at: now }));   // otimista
+  renderAll(); setSync('saving');
+  const { error } = await sb.from('interacoes').upsert(rows.map(pickI), { onConflict: 'tag_id' });
+  if (error) {
+    console.error(error); toast('Erro ao salvar: ' + error.message, 'err');
+    try { await loadInter(); } catch {} setSync('error'); renderAll();
+  } else setSync('ok');
+}
+
+const wantList = () => [...state.inter.values()]
+  .filter(i => i.quero_fazer && state.byId.has(i.tag_id))
+  .sort((a, b) => (a.prioridade ?? 1e9) - (b.prioridade ?? 1e9));
+
+async function applyWant(orderIds, targetId, targetOn) {
+  const rows = [];
+  orderIds.forEach((id, idx) => {
+    const cur = getI(id), pr = idx + 1;
+    if (id === targetId || cur.prioridade !== pr || !cur.quero_fazer) rows.push({ ...cur, quero_fazer: true, prioridade: pr });
+  });
+  if (targetId && !targetOn) rows.push({ ...getI(targetId), quero_fazer: false, prioridade: null });
+  await commit(rows);
+}
+function reorder(id, pos) {
+  const ids = wantList().map(x => x.tag_id).filter(x => x !== id);
+  pos = Math.max(1, Math.min(ids.length + 1, Math.round(pos) || 1));
+  ids.splice(pos - 1, 0, id);
+  return applyWant(ids, null, null);
+}
+function moveWant(id, delta) {
+  const idx = wantList().findIndex(x => x.tag_id === id);
+  if (idx >= 0) reorder(id, idx + 1 + delta);
+}
+async function toggle(id, k) {
+  const cur = getI(id), on = !cur[k];
+  if (k === 'quero_fazer') {
+    const ids = wantList().map(x => x.tag_id).filter(x => x !== id);
+    if (on) ids.push(id);
+    return applyWant(ids, id, on);
+  }
+  const patch = { [k]: on };
+  if (on && k === 'favorito') patch.odiado = false;
+  if (on && k === 'odiado') patch.favorito = false;
+  return commit([{ ...cur, ...patch }]);
+}
+
+/* ---------- Importação ---------- */
+async function importFile(file) {
+  if (!configured) return toast('Configure o Supabase no topo do index.html primeiro.', 'err');
+  const rows = parseDelimited(await file.text());
+  if (rows.length < 2) return toast('Arquivo vazio ou sem linhas de dados.', 'err');
+  const headers = rows[0].map(normKey);
+  if (!headers.includes('tag_id') || !headers.includes('nome_principal'))
+    return toast('O cabeçalho precisa ter as colunas tag_id e nome_principal.', 'err');
+  const map = new Map();
+  for (const r of rows.slice(1)) {
+    const d = {}; headers.forEach((h, i) => { if (h) d[h] = (r[i] ?? '').trim(); });
+    if (!d.tag_id) continue;
+    map.set(d.tag_id, {
+      tag_id: d.tag_id, nome_principal: d.nome_principal || d.tag_id,
+      tag_regiao: d.tag_regiao || 'tag_na',
+      preco_min: parsePrice(d.preco_min), preco_max: parsePrice(d.preco_max),
+      link_referencia: isEmpty(d.link_referencia) ? null : d.link_referencia, dados: d,
+    });
+  }
+  const list = [...map.values()];
+  if (!confirm(`Importar ${list.length} atividades?\nItens com o mesmo tag_id serão atualizados; avaliações e status são preservados.`)) return;
+  setSync('saving');
+  for (let i = 0; i < list.length; i += 500) {
+    const { error } = await sb.from('atividades').upsert(list.slice(i, i + 500), { onConflict: 'tag_id' });
+    if (error) { setSync('error'); return toast('Erro na importação: ' + error.message, 'err'); }
+  }
+  toast(`${list.length} atividades importadas ✔`);
+  await reloadAll();
+}
+
+/* ---------- Log de links ---------- */
+async function loadBroken() {
+  try {
+    const r = await fetch(LINK_LOG_URL + '?ts=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    state.broken = new Map();
+    (j.errors || []).forEach(e => { const a = state.broken.get(e.tag_id) || []; a.push(e); state.broken.set(e.tag_id, a); });
+    state.checkedAt = j.generated_at || null;
+  } catch { /* sem log ainda: tudo bem */ }
+  renderBanner(); renderGrid();
+}
+
+/* ---------- UI helpers ---------- */
+const stars = (n, cls = 'text-base') => `<span class="${cls} tracking-tight" aria-label="${n} de 5 estrelas">` +
+  [1,2,3,4,5].map(k => `<span class="${k <= n ? 'text-amber-400' : 'text-slate-300'}">★</span>`).join('') + '</span>';
+
+function priceText(it) {
+  if (!it.pr) return 'Sem preço informado';
+  return it.pr[0] === it.pr[1] ? fmtMoney(it.pr[0]) : `${fmtMoney(it.pr[0])} – ${fmtMoney(it.pr[1])}`;
+}
+function mapsUrl(it) {
+  const r = String(it.regiaoRaw ?? '').trim().toLowerCase();
+  if (!r || r === 'tag_na') return null;                 // tag_na => NÃO gera o botão
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(`${it.nome} ${CIDADE}`).replace(/%20/g, '+');
+}
+function toast(msg, type = 'ok') {
+  const t = document.createElement('div');
+  t.className = `pop px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white ${type === 'err' ? 'bg-rose-600' : 'bg-slate-800'}`;
+  t.textContent = msg; $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4500);
+}
+function setSync(s) {
+  const map = { ok: ['bg-emerald-400', 'Sincronizado'], saving: ['bg-amber-300 animate-pulse', 'Salvando…'],
+                loading: ['bg-sky-300 animate-pulse', 'Carregando…'], error: ['bg-rose-400', 'Erro de conexão'] };
+  const [c, t] = map[s] || map.loading;
+  $('#syncDot').className = 'w-2 h-2 rounded-full ' + c; $('#syncTxt').textContent = t;
+}
+
+/* ---------- Slider de preço ---------- */
+function setupSlider() {
+  const step = Math.max(1, Math.round(state.bound / 200));
+  ['#rMin', '#rMax'].forEach(s => { $(s).max = state.bound; $(s).step = step; });
+  $('#nMin').max = $('#nMax').max = state.bound;
+  syncPrice();
+}
+function syncPrice() {
+  $('#rMin').value = state.pMin; $('#rMax').value = state.pMax;
+  $('#nMin').value = state.pMin; $('#nMax').value = state.pMax;
+  const b = state.bound;
+  $('#fill').style.left = (state.pMin / b * 100) + '%';
+  $('#fill').style.width = ((state.pMax - state.pMin) / b * 100) + '%';
+  $('#rMin').style.zIndex = state.pMin > b / 2 ? 3 : 1; $('#rMax').style.zIndex = 2;
+  $('#priceLabel').textContent = `${fmtMoney(state.pMin)} – ${fmtMoney(state.pMax)}`;
+}
+function setPrice(min, max, from) {
+  min = Math.max(0, Number.isFinite(min) ? min : 0);
+  max = Math.min(state.bound, Number.isFinite(max) ? max : state.bound);
+  if (min > max) { if (from === 'min') min = max; else max = min; }
+  state.pMin = min; state.pMax = max; state.limit = 60; syncPrice(); renderGrid();
+}
+
+/* ---------- Renderização ---------- */
+function filtered() {
+  const q = strip(state.q).toLowerCase().trim();
+  const sel = [...state.selTags];
+  let list = state.items.filter(it => {
+    if (q && !it.search.includes(q)) return false;
+    if (sel.length && !(state.mode === 'AND' ? sel.every(t => it.tags.has(t)) : sel.some(t => it.tags.has(t)))) return false;
+    if (!it.pr) return state.semPreco;
+    return it.pr[1] >= state.pMin && it.pr[0] <= state.pMax;
+  });
+  const by = {
+    nome: (a, b) => a.nome.localeCompare(b.nome, 'pt-BR'),
+    preco_asc: (a, b) => (a.pr ? a.pr[0] : 1e12) - (b.pr ? b.pr[0] : 1e12),
+    preco_desc: (a, b) => (b.pr ? b.pr[1] : -1) - (a.pr ? a.pr[1] : -1),
+    nota: (a, b) => getI(b.id).nota - getI(a.id).nota,
+  }[state.sort];
+  return list.sort((a, b) => by(a, b) || a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+function renderTags() {
+  const q = strip(state.tagQ).toLowerCase();
+  const arr = [...state.tags.values()].filter(t => !q || strip(t.label).toLowerCase().includes(q))
+    .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  $('#tagBox').innerHTML = arr.length ? arr.map(t => {
+    const on = state.selTags.has(t.key);
+    return `<button data-act="tag" data-key="${esc(t.key)}" class="px-2.5 py-1 rounded-full text-xs font-medium border transition ${on
+      ? 'bg-indigo-600 border-indigo-600 text-white shadow' : 'bg-white border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-700'}">
+      ${esc(t.label)} <span class="${on ? 'text-white/70' : 'text-slate-400'}">${t.count}</span></button>`;
+  }).join('') : '<p class="text-xs text-slate-400">Nenhuma tag encontrada.</p>';
+  ['AND', 'OR'].forEach(m => $('#mode-' + m).className = 'px-2.5 py-1 rounded-md font-semibold ' + (state.mode === m ? 'bg-white shadow text-indigo-700' : 'text-slate-500'));
+}
+
+function badges(id) {
+  const i = getI(id), b = [];
+  if (i.favorito) b.push('❤️'); if (i.odiado) b.push('👎'); if (i.ja_fez) b.push('✅'); if (i.quero_fazer) b.push('🔖');
+  if (state.broken.has(id)) b.push('<span title="Link de referência fora do ar">⚠️</span>');
+  return b.join(' ');
+}
+
+function renderGrid() {
+  if (!configured) {
+    $('#count').textContent = '';
+    $('#grid').innerHTML = `<div class="sm:col-span-2 xl:col-span-3 bg-white border border-amber-200 rounded-2xl p-8 text-center">
+      <div class="text-4xl mb-2">🔧</div><h3 class="font-bold text-lg">Falta conectar o Supabase</h3>
+      <p class="text-slate-500 text-sm mt-1">Abra o <code>index.html</code>, preencha <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> no topo do script e recarregue.</p></div>`;
+    return;
+  }
+  const all = filtered(), list = all.slice(0, state.limit);
+  $('#count').textContent = `${all.length} de ${state.items.length} atividades`;
+  if (!state.items.length) {
+    $('#grid').innerHTML = `<div class="sm:col-span-2 xl:col-span-3 bg-white border border-slate-200 rounded-2xl p-10 text-center">
+      <div class="text-4xl mb-2">📥</div><h3 class="font-bold text-lg">Nenhuma atividade ainda</h3>
+      <p class="text-slate-500 text-sm mt-1">Clique em <b>Importar CSV</b> no topo para carregar seu arquivo (CSV ou TSV).</p></div>`;
+    return;
+  }
+  if (!all.length) {
+    $('#grid').innerHTML = `<div class="sm:col-span-2 xl:col-span-3 text-center text-slate-500 py-16">Nada encontrado com esses filtros. <button data-act="clear" class="text-indigo-600 font-semibold underline">Limpar filtros</button></div>`;
+    return;
+  }
+  $('#grid').innerHTML = list.map(it => {
+    const i = getI(it.id);
+    const tags = [...it.tags].slice(0, 4).map(t => `<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-medium">${esc(tagLabel(t))}</span>`).join('');
+    const more = it.tags.size > 4 ? `<span class="text-[11px] text-slate-400">+${it.tags.size - 4}</span>` : '';
+    const sub = !isEmpty(it.d.tipo_bruto_texto) ? it.d.tipo_bruto_texto : (!isEmpty(it.d.texto_endereco) ? it.d.texto_endereco : '');
+    return `<button data-open="${esc(it.id)}" class="group text-left bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-xl hover:-translate-y-0.5 hover:border-indigo-300 transition flex flex-col">
+      <div class="flex items-start justify-between gap-2">
+        <h3 class="font-bold leading-snug group-hover:text-indigo-700">${esc(it.nome)}</h3>
+        <span class="text-sm shrink-0">${badges(it.id)}</span>
+      </div>
+      <p class="text-sm text-slate-500 mt-1 line-clamp-2 min-h-[1.25rem]">${esc(sub)}</p>
+      <div class="flex flex-wrap items-center gap-1 mt-3">${tags}${more}</div>
+      <div class="mt-auto pt-4 flex items-center justify-between">
+        <span class="text-sm font-semibold ${it.pr ? 'text-emerald-700' : 'text-slate-400'}">${esc(priceText(it))}</span>
+        ${i.nota ? stars(i.nota, 'text-sm') : ''}
+      </div></button>`;
+  }).join('') + (all.length > state.limit
+    ? `<div class="sm:col-span-2 xl:col-span-3 text-center"><button data-act="more" class="mt-2 px-5 py-2 rounded-xl bg-white border border-slate-300 text-sm font-semibold hover:border-indigo-400">Mostrar mais (${all.length - state.limit})</button></div>` : '');
+}
+
+/* Listas */
+const itemsWith = pred => [...state.inter.values()].filter(i => pred(i) && state.byId.has(i.tag_id)).map(i => ({ it: state.byId.get(i.tag_id), i }));
+const LISTAS = {
+  favoritos: { label: 'Favoritos', icon: '❤️', empty: 'Marque atividades com ❤️ para vê-las aqui.',
+    get: () => itemsWith(i => i.favorito).sort((a, b) => a.it.nome.localeCompare(b.it.nome, 'pt-BR')) },
+  odiados:   { label: 'Odiados', icon: '👎', empty: 'Nenhuma atividade odiada — que bom! 😄',
+    get: () => itemsWith(i => i.odiado).sort((a, b) => a.it.nome.localeCompare(b.it.nome, 'pt-BR')) },
+  jafez:     { label: 'Já fiz', icon: '✅', empty: 'Quando você marcar "Já fiz: Sim", o histórico aparece aqui.',
+    get: () => itemsWith(i => i.ja_fez).sort((a, b) => String(b.i.updated_at).localeCompare(String(a.i.updated_at))) },
+  quero:     { label: 'Quero fazer', icon: '🔖', empty: 'Sua lista de desejos está vazia. Marque "Quero fazer: Sim" em uma atividade.',
+    get: () => wantList().map(i => ({ it: state.byId.get(i.tag_id), i })) },
+  ranking:   { label: 'Ranking', icon: '🏆', empty: 'Dê notas de 1 a 5 estrelas para montar seu ranking.',
+    get: () => itemsWith(i => i.nota > 0).sort((a, b) => b.i.nota - a.i.nota || a.it.nome.localeCompare(b.it.nome, 'pt-BR')) },
+};
+
+function renderLists() {
+  $('#subtabs').innerHTML = Object.entries(LISTAS).map(([k, l]) => {
+    const n = l.get().length, on = state.lista === k;
+    return `<button data-act="sub" data-v="${k}" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition ${on
+      ? 'bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white border-transparent shadow' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'}">
+      <span>${l.icon}</span>${l.label}<span class="text-xs rounded-full px-2 py-0.5 ${on ? 'bg-white/25' : 'bg-slate-100 text-slate-500'}">${n}</span></button>`;
+  }).join('');
+
+  const L = LISTAS[state.lista], data = L.get();
+  if (!data.length) { $('#listBody').innerHTML = `<div class="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">${L.icon} ${esc(L.empty)}</div>`; return; }
+  const medal = ['🥇', '🥈', '🥉'];
+  $('#listBody').innerHTML = data.map(({ it, i }, idx) => {
+    const pos = idx + 1, showPos = state.lista === 'quero' || state.lista === 'ranking';
+    const posHtml = !showPos ? '' : `<div class="w-10 h-10 shrink-0 rounded-full grid place-items-center font-extrabold ${
+      state.lista === 'ranking' && pos <= 3 ? 'text-xl bg-amber-50' : 'bg-indigo-50 text-indigo-700'}">${state.lista === 'ranking' && pos <= 3 ? medal[pos - 1] : pos}</div>`;
+    const ctrl = state.lista !== 'quero' ? '' : `<div class="flex flex-col">
+        <button data-act="up" data-id="${esc(it.id)}" ${pos === 1 ? 'disabled' : ''} class="px-2 text-slate-500 hover:text-indigo-600 disabled:opacity-25" title="Subir prioridade">▲</button>
+        <button data-act="down" data-id="${esc(it.id)}" ${pos === data.length ? 'disabled' : ''} class="px-2 text-slate-500 hover:text-indigo-600 disabled:opacity-25" title="Descer prioridade">▼</button></div>`;
+    const sub = [!isEmpty(it.d.tipo_bruto_texto) ? it.d.tipo_bruto_texto : '', priceText(it)].filter(Boolean).join(' · ');
+    return `<div class="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3 hover:shadow-md transition">
+      ${posHtml}
+      <button data-open="${esc(it.id)}" class="flex-1 min-w-0 text-left">
+        <div class="font-semibold truncate">${esc(it.nome)} <span class="text-sm">${badges(it.id)}</span></div>
+        <div class="text-xs text-slate-500 truncate">${esc(sub)}</div></button>
+      <div class="hidden sm:block">${stars(i.nota, 'text-lg')}</div>${ctrl}</div>`;
+  }).join('');
+}
+
+function renderBanner() {
+  const el = $('#banner'), ids = [...state.broken.keys()];
+  if (!ids.length || state.bannerDismissed) { el.innerHTML = ''; return; }
+  const when = state.checkedAt ? new Date(state.checkedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  const details = !state.bannerOpen ? '' : `<div class="max-w-7xl mx-auto px-4 pb-3 grid gap-1.5 text-sm">${ids.map(id => {
+      const e = state.broken.get(id)[0], nome = state.byId.get(id)?.nome || e.nome || id;
+      return `<button data-open="${esc(id)}" class="text-left bg-white/70 hover:bg-white rounded-lg px-3 py-1.5 border border-amber-200">
+        <b>${esc(nome)}</b> <span class="text-amber-800/80">— ${esc(e.motivo)}${e.desde ? ' · desde ' + new Date(e.desde).toLocaleDateString('pt-BR') : ''}</span></button>`; }).join('')}</div>`;
+  el.innerHTML = `<div class="bg-amber-50 border-b border-amber-200 text-amber-900 pop">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <span>⚠️</span>
+      <span class="font-semibold">${ids.length} ${ids.length > 1 ? 'atividades estão com o link de referência fora do ar' : 'atividade está com o link de referência fora do ar'}</span>
+      ${when ? `<span class="text-xs text-amber-700/80">verificado em ${esc(when)}</span>` : ''}
+      <button data-act="banner-details" class="ml-auto underline text-xs font-semibold">${state.bannerOpen ? 'Ocultar' : 'Ver detalhes'}</button>
+      <button data-act="banner-close" class="text-amber-700 hover:text-amber-900" title="Dispensar">✕</button>
+    </div>${details}</div>`;
+}
+
+/* Modal */
+function openModal(id) {
+  if (!state.byId.has(id)) return;
+  state.openId = id; $('#modal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; renderModal(true);
+}
+function closeModal() { state.openId = null; $('#modal').classList.add('hidden'); document.body.style.overflow = ''; }
+
+function renderModal(reset) {
+  const it = state.byId.get(state.openId); if (!it) return closeModal();
+  const body = $('#modalBody'), scroll = reset ? 0 : body.scrollTop;
+  const i = getI(it.id), d = it.d, maps = mapsUrl(it), bad = state.broken.get(it.id);
+  const fields = [['📍 Endereço', 'texto_endereco'], ['🏷️ Tipo', 'tipo_bruto_texto'], ['⭐ Item de referência', 'item_referencia_texto'],
+                  ['💵 Custo estimado', 'custo_estimado_texto'], ['💡 Ideias', 'texto_ideia'], ['📝 Complemento', 'texto_complemento']]
+    .filter(([, k]) => !isEmpty(d[k]))
+    .map(([l, k]) => `<div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">${l}</dt><dd class="mt-0.5 whitespace-pre-line">${esc(d[k])}</dd></div>`).join('');
+  const link = it.link && !isEmpty(it.link) ? `<div><dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">🔗 Link de referência</dt>
+      <dd class="mt-0.5 break-all"><a href="${esc(/^https?:\/\//i.test(it.link) ? it.link : 'https://' + it.link)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 underline">${esc(it.link)}</a></dd></div>` : '';
+  const tgl = (k, label, icon, onCls) => `<button data-act="toggle" data-k="${k}" aria-pressed="${i[k]}" class="flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${i[k] ? onCls : 'bg-white border-slate-300 text-slate-600 hover:border-indigo-300'}">
+      <span>${icon} ${label}</span><span class="text-xs rounded-full px-2 py-0.5 ${i[k] ? 'bg-white/30' : 'bg-slate-100'}">${i[k] ? 'Sim' : 'Não'}</span></button>`;
+  const wl = wantList(), pos = wl.findIndex(x => x.tag_id === it.id) + 1;
+  const prio = !i.quero_fazer ? '' : `<div class="mt-3 flex flex-wrap items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5 text-sm">
+      <span class="font-semibold text-indigo-800">Prioridade na fila</span>
+      <div class="flex items-center gap-2">
+        <button data-act="up" data-id="${esc(it.id)}" ${pos <= 1 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-white border border-indigo-200 disabled:opacity-30">▲</button>
+        <input id="prioInput" type="number" min="1" max="${wl.length}" value="${pos}" class="w-16 text-center rounded-lg border border-indigo-200 py-1 font-bold">
+        <span class="text-indigo-700">de ${wl.length}</span>
+        <button data-act="down" data-id="${esc(it.id)}" ${pos >= wl.length ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-white border border-indigo-200 disabled:opacity-30">▼</button>
+      </div></div>`;
+  body.innerHTML = `
+    <div class="bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white p-6 rounded-t-3xl relative">
+      <button data-act="close" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30" aria-label="Fechar">✕</button>
+      <h2 class="text-2xl font-extrabold pr-10 leading-tight">${esc(it.nome)}</h2>
+      <p class="mt-1 font-semibold text-white/90">${esc(priceText(it))}</p>
+      <div class="flex flex-wrap gap-1.5 mt-3">${[...it.tags].map(t => `<span class="px-2 py-0.5 rounded-full bg-white/20 text-xs font-medium">${esc(tagLabel(t))}</span>`).join('')}</div>
+    </div>
+    <div class="p-6 space-y-6">
+      ${bad ? `<div class="rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm px-3 py-2">⚠️ O link de referência parece estar fora do ar (${esc(bad[0].motivo)}).</div>` : ''}
+      <dl class="grid gap-4 text-sm">${fields}${link}</dl>
+      ${maps ? `<a href="${maps}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2.5 shadow transition">📍 Ver no Google Maps</a>` : ''}
+      <div>
+        <h3 class="text-sm font-bold mb-2">Sua avaliação</h3>
+        <div class="flex items-center gap-1">
+          ${[1,2,3,4,5].map(k => `<button data-act="star" data-v="${k}" class="text-4xl leading-none transition hover:scale-125 ${k <= i.nota ? 'text-amber-400' : 'text-slate-300 hover:text-amber-200'}" aria-label="${k} estrela(s)">★</button>`).join('')}
+          <span class="ml-3 text-sm text-slate-500">${i.nota ? i.nota + ' de 5 · toque na mesma estrela para limpar' : 'Sem nota'}</span>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold mb-2">Meu status</h3>
+        <div class="grid sm:grid-cols-2 gap-2">
+          ${tgl('ja_fez', 'Já fiz', '✅', 'bg-emerald-600 border-emerald-600 text-white')}
+          ${tgl('quero_fazer', 'Quero fazer', '🔖', 'bg-indigo-600 border-indigo-600 text-white')}
+          ${tgl('favorito', 'Favorito', '❤️', 'bg-rose-500 border-rose-500 text-white')}
+          ${tgl('odiado', 'Odiado', '👎', 'bg-slate-700 border-slate-700 text-white')}
+        </div>${prio}
+      </div>
+    </div>`;
+  body.scrollTop = scroll;
+}
+
+function renderAll() {
+  renderTags(); renderGrid(); renderLists(); renderBanner();
+  ['explorar', 'listas'].forEach(t => {
+    $('#view-' + t).classList.toggle('hidden', state.tab !== t);
+    $('#tab-' + t).className = 'px-5 py-2 rounded-xl text-sm font-semibold transition ' + (state.tab === t ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100');
+  });
+  if (state.openId) renderModal(false);
+}
+
+/* ---------- Eventos ---------- */
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-open]');
+  if (o) { openModal(o.dataset.open); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const id = a.dataset.id || state.openId;
+  switch (a.dataset.act) {
+    case 'close': closeModal(); break;
+    case 'tab': state.tab = a.dataset.v; renderAll(); window.scrollTo({ top: 0 }); break;
+    case 'sub': state.lista = a.dataset.v; renderLists(); break;
+    case 'tag': { const k = a.dataset.key; state.selTags.has(k) ? state.selTags.delete(k) : state.selTags.add(k); state.limit = 60; renderTags(); renderGrid(); break; }
+    case 'mode': state.mode = a.dataset.v; state.limit = 60; renderTags(); renderGrid(); break;
+    case 'clear': state.selTags.clear(); state.q = ''; $('#q').value = ''; state.semPreco = true; $('#semPreco').checked = true;
+                  state.pMin = 0; state.pMax = state.bound; state.limit = 60; syncPrice(); renderAll(); break;
+    case 'more': state.limit += 60; renderGrid(); break;
+    case 'filters': $('#filters').classList.toggle('hidden'); break;
+    case 'star': { const v = +a.dataset.v, cur = getI(id); commit([{ ...cur, nota: cur.nota === v ? 0 : v }]); break; }
+    case 'toggle': toggle(id, a.dataset.k); break;
+    case 'up': moveWant(id, -1); break;
+    case 'down': moveWant(id, 1); break;
+    case 'banner-details': state.bannerOpen = !state.bannerOpen; renderBanner(); break;
+    case 'banner-close': state.bannerDismissed = true; renderBanner(); break;
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.openId) closeModal(); });
+document.addEventListener('change', e => {
+  if (e.target.id === 'prioInput' && state.openId) reorder(state.openId, +e.target.value);
+});
+$('#q').addEventListener('input', e => { state.q = e.target.value; state.limit = 60; renderGrid(); });
+$('#sort').addEventListener('change', e => { state.sort = e.target.value; renderGrid(); });
+$('#tagSearch').addEventListener('input', e => { state.tagQ = e.target.value; renderTags(); });
+$('#semPreco').addEventListener('change', e => { state.semPreco = e.target.checked; state.limit = 60; renderGrid(); });
+$('#rMin').addEventListener('input', e => setPrice(+e.target.value, state.pMax, 'min'));
+$('#rMax').addEventListener('input', e => setPrice(state.pMin, +e.target.value, 'max'));
+$('#nMin').addEventListener('change', e => setPrice(parseInt(e.target.value, 10), state.pMax, 'min'));
+$('#nMax').addEventListener('change', e => setPrice(state.pMin, parseInt(e.target.value, 10), 'max'));
+$('#btnImport').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await importFile(f); });
+
+/* ---------- Tempo real (celular ⇄ computador) ---------- */
+let rtTimer;
+function subscribeRealtime() {
+  try {
+    sb.channel('rt-interacoes').on('postgres_changes', { event: '*', schema: 'public', table: 'interacoes' }, p => {
+      if (p.eventType === 'DELETE') state.inter.delete(p.old.tag_id); else state.inter.set(p.new.tag_id, p.new);
+      clearTimeout(rtTimer);
+      rtTimer = setTimeout(() => { if (!document.activeElement?.closest?.('#modalBody input')) renderAll(); }, 200);
+    }).subscribe();
+  } catch (e) { console.warn('Realtime indisponível', e); }
+}
+
+/* ---------- Início ---------- */
+async function boot() {
+  setupSlider(); renderAll();
+  loadBroken();
+  if (!configured) { setSync('error'); $('#syncTxt').textContent = 'Supabase não configurado'; return; }
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  await reloadAll();
+  subscribeRealtime();
+}
+boot();
+</script>
+</body>
+</html>
