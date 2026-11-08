@@ -31,6 +31,20 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
+<!-- Tela de login -->
+<div id="auth" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+    <div class="text-4xl text-center">🧭</div>
+    <h2 class="text-center font-extrabold text-lg mt-2">Guia de Atividades</h2>
+    <form id="fLogin" class="grid gap-3 mt-4">
+      <input id="inEmail" type="email" required autocomplete="username" placeholder="E-mail" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <input id="inPass" type="password" required autocomplete="current-password" placeholder="Senha" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <button class="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 text-sm transition disabled:opacity-60">Entrar</button>
+      <p id="authMsg" class="text-sm text-rose-600 text-center"></p>
+    </form>
+  </div>
+</div>
+
 <!-- Cabeçalho -->
 <header class="sticky top-0 z-30 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg">
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -43,8 +57,8 @@
       <div id="sync" class="flex items-center gap-2 text-xs bg-white/15 rounded-full px-3 py-1.5">
         <span id="syncDot" class="w-2 h-2 rounded-full bg-slate-300"></span><span id="syncTxt">Conectando…</span>
       </div>
-      <button id="btnImport" class="text-sm font-semibold bg-white text-indigo-700 hover:bg-indigo-50 rounded-full px-4 py-1.5 shadow transition">⬆ Importar CSV</button>
-      <input id="fileInput" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" class="hidden">
+      <button data-act="tab" data-v="arquivos" class="text-sm font-semibold bg-white text-indigo-700 hover:bg-indigo-50 rounded-full px-4 py-1.5 shadow transition">📂 Arquivos</button>
+      <button id="btnSair" class="hidden text-xs font-semibold text-white/90 hover:text-white underline underline-offset-2">Sair</button>
     </div>
   </div>
 </header>
@@ -57,6 +71,7 @@
   <nav class="flex gap-2 mb-6 bg-white rounded-2xl p-1.5 border border-slate-200 w-fit shadow-sm">
     <button data-act="tab" data-v="explorar" id="tab-explorar" class="px-5 py-2 rounded-xl text-sm font-semibold transition">🔎 Explorar</button>
     <button data-act="tab" data-v="listas" id="tab-listas" class="px-5 py-2 rounded-xl text-sm font-semibold transition">📚 Minhas Listas</button>
+    <button data-act="tab" data-v="arquivos" id="tab-arquivos" class="px-5 py-2 rounded-xl text-sm font-semibold transition">📂 Arquivos</button>
   </nav>
 
   <!-- ===== EXPLORAR ===== -->
@@ -127,6 +142,31 @@
     <div id="subtabs" class="flex flex-wrap gap-2 mb-5"></div>
     <div id="listBody" class="space-y-2 max-w-3xl"></div>
   </section>
+
+  <!-- ===== ARQUIVOS ===== -->
+  <section id="view-arquivos" class="hidden">
+    <div class="max-w-3xl space-y-6">
+      <div id="drop" class="rounded-3xl border-2 border-dashed border-indigo-300 bg-white p-10 text-center transition">
+        <div class="text-5xl mb-2">📂</div>
+        <h2 class="text-lg font-bold">Arraste seus arquivos CSV/TSV aqui</h2>
+        <p class="text-sm text-slate-500 mt-1">Pode soltar <b>vários de uma vez</b>. Enviar um arquivo com o <b>mesmo nome</b> de outro já existente substitui a versão anterior.</p>
+        <button data-act="pick" class="mt-4 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-semibold text-sm px-5 py-2.5 shadow hover:opacity-90 transition">Escolher arquivos…</button>
+        <input id="fileInput" type="file" multiple accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" class="hidden">
+      </div>
+      <div id="progress" class="hidden rounded-2xl bg-slate-800 text-white text-sm p-4 space-y-1"></div>
+      <div>
+        <h3 class="font-bold mb-2">Arquivos no site</h3>
+        <div id="fileList" class="space-y-2"></div>
+      </div>
+      <div id="orphanInfo"></div>
+      <div class="rounded-2xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-900 p-4 space-y-1">
+        <p class="font-semibold">Como funciona</p>
+        <p>• Suas estrelas, favoritos, "já fiz" e prioridades ficam presos ao <b>tag_id</b>, não ao arquivo.</p>
+        <p>• Remover ou trocar um arquivo <b>nunca apaga suas avaliações</b>: elas reaparecem sozinhas quando o mesmo tag_id voltar em qualquer arquivo.</p>
+        <p>• Se o mesmo tag_id estiver em dois arquivos, vale o conteúdo do último enviado.</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <!-- Modal de detalhes -->
@@ -174,6 +214,7 @@ const configured = !SUPABASE_URL.includes('SEU-PROJETO') && !SUPABASE_ANON_KEY.i
 let sb = null;
 const state = {
   items: [], byId: new Map(), inter: new Map(), tags: new Map(),
+  arquivos: [], importing: false, progress: [],
   selTags: new Set(), mode: 'AND', q: '', sort: 'nome', tagQ: '',
   bound: 100, pMin: 0, pMax: 100, semPreco: true, limit: 60,
   tab: 'explorar', lista: 'favoritos', openId: null,
@@ -238,10 +279,10 @@ function extractTags(d) {
 }
 
 /* ---------- Supabase ---------- */
-async function fetchAll(table, order) {
+async function fetchAll(table, order, select = '*') {
   const out = [], size = 1000;
   for (let from = 0; ; from += size) {
-    const { data, error } = await sb.from(table).select('*').order(order).range(from, from + size - 1);
+    const { data, error } = await sb.from(table).select(select).order(order).range(from, from + size - 1);
     if (error) throw error;
     out.push(...data);
     if (data.length < size) break;
@@ -255,7 +296,7 @@ function buildItems(rows) {
     const d = r.dados || {};
     const a = Number(r.preco_min), b = Number(r.preco_max);
     const it = {
-      id: r.tag_id, nome: r.nome_principal || r.tag_id, d,
+      id: r.tag_id, nome: r.nome_principal || r.tag_id, d, arquivoId: r.arquivo_id ?? null,
       regiaoRaw: d.tag_regiao ?? r.tag_regiao, link: r.link_referencia,
       tags: extractTags(d), pr: priceRange(Number.isFinite(a) ? a : -1, Number.isFinite(b) ? b : -1),
     };
@@ -282,12 +323,15 @@ async function loadInter() {
 async function reloadAll() {
   setSync('loading');
   try {
+    state.arquivos = await fetchAll('arquivos', 'id');
     const acts = await fetchAll('atividades', 'tag_id');
     buildItems(acts);
     await loadInter();
     setSync('ok');
   } catch (e) {
-    console.error(e); setSync('error'); toast('Falha ao carregar: ' + (e.message || e), 'err');
+    console.error(e); setSync('error');
+    const m = String(e.message || e);
+    toast(/arquivo/i.test(m) ? 'Banco desatualizado: rode o migracao_v2.sql no Supabase (veja o README).' : 'Falha ao carregar: ' + m, 'err');
   }
   renderAll();
 }
@@ -346,13 +390,14 @@ async function toggle(id, k) {
 }
 
 /* ---------- Importação ---------- */
-async function importFile(file) {
-  if (!configured) return toast('Configure o Supabase no topo do index.html primeiro.', 'err');
+const hasInter = i => i.nota > 0 || i.ja_fez || i.quero_fazer || i.favorito || i.odiado;
+
+async function parseFile(file) {
   const rows = parseDelimited(await file.text());
-  if (rows.length < 2) return toast('Arquivo vazio ou sem linhas de dados.', 'err');
+  if (rows.length < 2) throw new Error('arquivo vazio ou sem linhas de dados');
   const headers = rows[0].map(normKey);
   if (!headers.includes('tag_id') || !headers.includes('nome_principal'))
-    return toast('O cabeçalho precisa ter as colunas tag_id e nome_principal.', 'err');
+    throw new Error('o cabeçalho precisa ter as colunas tag_id e nome_principal');
   const map = new Map();
   for (const r of rows.slice(1)) {
     const d = {}; headers.forEach((h, i) => { if (h) d[h] = (r[i] ?? '').trim(); });
@@ -364,15 +409,119 @@ async function importFile(file) {
       link_referencia: isEmpty(d.link_referencia) ? null : d.link_referencia, dados: d,
     });
   }
-  const list = [...map.values()];
-  if (!confirm(`Importar ${list.length} atividades?\nItens com o mesmo tag_id serão atualizados; avaliações e status são preservados.`)) return;
-  setSync('saving');
-  for (let i = 0; i < list.length; i += 500) {
-    const { error } = await sb.from('atividades').upsert(list.slice(i, i + 500), { onConflict: 'tag_id' });
-    if (error) { setSync('error'); return toast('Erro na importação: ' + error.message, 'err'); }
+  if (!map.size) throw new Error('nenhuma linha com tag_id');
+  return { nome: file.name, list: [...map.values()] };
+}
+
+function logProgress(msg) { state.progress.push(msg); renderProgress(); }
+
+async function importFiles(fileList) {
+  if (!configured) return toast('Configure o Supabase no topo do index.html primeiro.', 'err');
+  if (state.importing) return toast('Aguarde: já existe uma importação em andamento.', 'err');
+  const files = [...fileList]; if (!files.length) return;
+
+  const parsed = [], problems = [];
+  for (const f of files) {
+    try { parsed.push(await parseFile(f)); } catch (e) { problems.push(`${f.name}: ${e.message}`); }
   }
-  toast(`${list.length} atividades importadas ✔`);
+  if (problems.length) toast('Ignorado(s) — ' + problems.join(' | '), 'err');
+  if (!parsed.length) return;
+
+  let dup = 0; const seen = new Map();
+  parsed.forEach(p => p.list.forEach(r => { if (seen.has(r.tag_id) && seen.get(r.tag_id) !== p.nome) dup++; seen.set(r.tag_id, p.nome); }));
+  const subst = parsed.filter(p => state.arquivos.some(a => a.nome === p.nome));
+  const total = parsed.reduce((s, p) => s + p.list.length, 0);
+  const msg = `Enviar ${parsed.length} arquivo(s) com ${total} atividades no total?\n\n` +
+    parsed.map(p => `• ${p.nome} — ${p.list.length} atividades${subst.includes(p) ? ' (SUBSTITUI a versão atual)' : ''}`).join('\n') +
+    (dup ? `\n\nAtenção: ${dup} tag_id(s) aparecem em mais de um arquivo; vale o último enviado.` : '') +
+    '\n\nSuas avaliações e status são preservados.';
+  if (!confirm(msg)) return;
+
+  state.importing = true; state.progress = []; setSync('saving'); renderProgress();
+  try {
+    const touched = new Map();   // arquivo_id -> Set de tag_ids da versão nova
+    for (const p of parsed) {
+      logProgress(`⏳ ${p.nome}: enviando ${p.list.length} atividades…`);
+      let arq = state.arquivos.find(a => a.nome === p.nome);
+      if (!arq) {
+        const { data, error } = await sb.from('arquivos').insert({ nome: p.nome }).select().single();
+        if (error) throw error;
+        arq = data; state.arquivos.push(arq);
+      } else {
+        const { error } = await sb.from('arquivos').update({ importado_em: new Date().toISOString() }).eq('id', arq.id);
+        if (error) throw error;
+      }
+      const rows = p.list.map(r => ({ ...r, arquivo_id: arq.id }));
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await sb.from('atividades').upsert(rows.slice(i, i + 500), { onConflict: 'tag_id' });
+        if (error) throw error;
+      }
+      touched.set(arq.id, new Set(p.list.map(r => r.tag_id)));
+      logProgress(`✅ ${p.nome}: ok`);
+    }
+    // Fase 2: nos arquivos SUBSTITUÍDOS, remove as atividades que não existem mais na versão nova.
+    // (Feito depois de todos os envios, para não apagar IDs que mudaram de arquivo no mesmo lote.)
+    const current = await fetchAll('atividades', 'tag_id', 'tag_id,arquivo_id');
+    const stale = current.filter(r => touched.has(r.arquivo_id) && !touched.get(r.arquivo_id).has(r.tag_id)).map(r => r.tag_id);
+    for (let i = 0; i < stale.length; i += 100) {
+      const { error } = await sb.from('atividades').delete().in('tag_id', stale.slice(i, i + 100));
+      if (error) throw error;
+    }
+    if (stale.length) logProgress(`🧹 ${stale.length} atividade(s) que saíram dos arquivos substituídos foram removidas (as avaliações delas continuam guardadas)`);
+    toast(`${parsed.length} arquivo(s) importado(s) ✔`); setSync('ok');
+  } catch (e) {
+    console.error(e); setSync('error');
+    toast('Erro na importação: ' + (e.message || e), 'err');
+  }
+  state.importing = false;
   await reloadAll();
+  setTimeout(() => { state.progress = []; renderProgress(); }, 6000);
+}
+
+async function removeFile(key) {
+  const isNull = key === 'null';
+  const arq = isNull ? null : state.arquivos.find(a => String(a.id) === key);
+  if (!isNull && !arq) return;
+  const group = state.items.filter(it => isNull ? it.arquivoId == null : String(it.arquivoId) === key);
+  const rated = group.filter(it => state.inter.has(it.id) && hasInter(state.inter.get(it.id))).length;
+  const nome = isNull ? 'Importadas antes (sem arquivo)' : arq.nome;
+  if (!confirm(`Remover "${nome}"?\n\n• ${group.length} atividade(s) deixam de aparecer no site.\n` +
+      `• ${rated} delas têm avaliação/status: isso continua GUARDADO e volta sozinho se esses tag_id reaparecerem em outro arquivo.`)) return;
+  setSync('saving');
+  const { error } = isNull
+    ? await sb.from('atividades').delete().is('arquivo_id', null)
+    : await sb.from('arquivos').delete().eq('id', arq.id);   // apaga as atividades do arquivo em cascata
+  if (error) { setSync('error'); return toast('Erro ao remover: ' + error.message, 'err'); }
+  toast(`"${nome}" removido ✔`);
+  await reloadAll();
+}
+
+function renderProgress() {
+  const el = $('#progress');
+  el.classList.toggle('hidden', !state.progress.length);
+  el.innerHTML = state.progress.map(esc).map(l => `<div>${l}</div>`).join('');
+}
+
+function renderArquivos() {
+  const groups = state.arquivos.map(a => ({ key: String(a.id), nome: a.nome, data: a.importado_em, legado: false }));
+  if (state.items.some(it => it.arquivoId == null)) groups.push({ key: 'null', nome: 'Importadas antes (sem arquivo)', data: null, legado: true });
+  $('#fileList').innerHTML = groups.length ? groups.map(g => {
+    const items = state.items.filter(it => g.legado ? it.arquivoId == null : String(it.arquivoId) === g.key);
+    const rated = items.filter(it => state.inter.has(it.id) && hasInter(state.inter.get(it.id))).length;
+    const when = g.data ? new Date(g.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    return `<div class="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-3.5">
+      <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-50 grid place-items-center text-xl">${g.legado ? '🗃️' : '📄'}</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold truncate">${esc(g.nome)}</div>
+        <div class="text-xs text-slate-500">${items.length} atividade(s) · ${rated} com avaliação/status${when ? ' · enviado em ' + esc(when) : ''}</div>
+      </div>
+      <button data-act="rm-file" data-key="${esc(g.key)}" class="shrink-0 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-semibold px-3 py-1.5 transition">🗑 Remover</button>
+    </div>`;
+  }).join('') : '<div class="bg-white border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-500 text-sm">Nenhum arquivo enviado ainda.</div>';
+
+  const orphans = [...state.inter.values()].filter(i => hasInter(i) && !state.byId.has(i.tag_id)).length;
+  $('#orphanInfo').innerHTML = orphans ? `<div class="rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm p-4">
+      💾 <b>${orphans}</b> avaliação(ões)/status guardados de atividades que não estão em nenhum arquivo agora. Eles voltam automaticamente quando esses tag_id reaparecerem.</div>` : '';
 }
 
 /* ---------- Log de links ---------- */
@@ -488,7 +637,7 @@ function renderGrid() {
   if (!state.items.length) {
     $('#grid').innerHTML = `<div class="sm:col-span-2 xl:col-span-3 bg-white border border-slate-200 rounded-2xl p-10 text-center">
       <div class="text-4xl mb-2">📥</div><h3 class="font-bold text-lg">Nenhuma atividade ainda</h3>
-      <p class="text-slate-500 text-sm mt-1">Clique em <b>Importar CSV</b> no topo para carregar seu arquivo (CSV ou TSV).</p></div>`;
+      <p class="text-slate-500 text-sm mt-1">Vá na aba <button data-act="tab" data-v="arquivos" class="font-bold text-indigo-600 underline">📂 Arquivos</button> e envie seus CSV/TSV (pode ser mais de um).</p></div>`;
     return;
   }
   if (!all.length) {
@@ -636,8 +785,8 @@ function renderModal(reset) {
 }
 
 function renderAll() {
-  renderTags(); renderGrid(); renderLists(); renderBanner();
-  ['explorar', 'listas'].forEach(t => {
+  renderTags(); renderGrid(); renderLists(); renderArquivos(); renderBanner();
+  ['explorar', 'listas', 'arquivos'].forEach(t => {
     $('#view-' + t).classList.toggle('hidden', state.tab !== t);
     $('#tab-' + t).className = 'px-5 py-2 rounded-xl text-sm font-semibold transition ' + (state.tab === t ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 hover:bg-slate-100');
   });
@@ -664,6 +813,8 @@ document.addEventListener('click', e => {
     case 'toggle': toggle(id, a.dataset.k); break;
     case 'up': moveWant(id, -1); break;
     case 'down': moveWant(id, 1); break;
+    case 'pick': $('#fileInput').click(); break;
+    case 'rm-file': removeFile(a.dataset.key); break;
     case 'banner-details': state.bannerOpen = !state.bannerOpen; renderBanner(); break;
     case 'banner-close': state.bannerDismissed = true; renderBanner(); break;
   }
@@ -680,12 +831,22 @@ $('#rMin').addEventListener('input', e => setPrice(+e.target.value, state.pMax, 
 $('#rMax').addEventListener('input', e => setPrice(state.pMin, +e.target.value, 'max'));
 $('#nMin').addEventListener('change', e => setPrice(parseInt(e.target.value, 10), state.pMax, 'min'));
 $('#nMax').addEventListener('change', e => setPrice(state.pMin, parseInt(e.target.value, 10), 'max'));
-$('#btnImport').addEventListener('click', () => $('#fileInput').click());
-$('#fileInput').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await importFile(f); });
+$('#fileInput').addEventListener('change', async e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) await importFiles(fs); });
+
+/* Arrastar e soltar (vários arquivos). Também evita que soltar fora da área abra o arquivo no navegador. */
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+const drop = $('#drop');
+drop.addEventListener('dragover', () => drop.classList.add('bg-indigo-50', 'border-fuchsia-500'));
+drop.addEventListener('dragleave', () => drop.classList.remove('bg-indigo-50', 'border-fuchsia-500'));
+drop.addEventListener('drop', async e => {
+  drop.classList.remove('bg-indigo-50', 'border-fuchsia-500');
+  const fs = [...e.dataTransfer.files]; if (fs.length) await importFiles(fs);
+});
 
 /* ---------- Tempo real (celular ⇄ computador) ---------- */
 let rtTimer;
 function subscribeRealtime() {
+  if (rtOn) return; rtOn = true;
   try {
     sb.channel('rt-interacoes').on('postgres_changes', { event: '*', schema: 'public', table: 'interacoes' }, p => {
       if (p.eventType === 'DELETE') state.inter.delete(p.old.tag_id); else state.inter.set(p.new.tag_id, p.new);
@@ -695,14 +856,38 @@ function subscribeRealtime() {
   } catch (e) { console.warn('Realtime indisponível', e); }
 }
 
+/* ---------- Login (e-mail + senha; só 2 contas existem) ---------- */
+let rtOn = false;
+async function enterApp(session) {
+  const { data: ok } = await sb.rpc('email_autorizado');
+  if (!ok) { await sb.auth.signOut(); $('#auth').classList.remove('hidden'); $('#authMsg').textContent = 'Este e-mail não tem acesso.'; return; }
+  $('#auth').classList.add('hidden');
+  $('#btnSair').classList.remove('hidden'); $('#btnSair').title = session.user.email;
+  await reloadAll();
+  subscribeRealtime();
+}
+async function doLogin(e) {
+  e.preventDefault();
+  const b = e.target.querySelector('button'); b.disabled = true; b.textContent = 'Entrando…';
+  const { data, error } = await sb.auth.signInWithPassword({ email: $('#inEmail').value.trim(), password: $('#inPass').value });
+  b.disabled = false; b.textContent = 'Entrar';
+  if (error) { $('#authMsg').textContent = 'E-mail ou senha incorretos.'; return; }
+  $('#authMsg').textContent = ''; await enterApp(data.session);
+}
+async function logout() { try { await sb.auth.signOut(); } finally { location.reload(); } }
+
 /* ---------- Início ---------- */
 async function boot() {
   setupSlider(); renderAll();
   loadBroken();
   if (!configured) { setSync('error'); $('#syncTxt').textContent = 'Supabase não configurado'; return; }
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  await reloadAll();
-  subscribeRealtime();
+  $('#fLogin').addEventListener('submit', doLogin);
+  $('#btnSair').addEventListener('click', logout);
+  sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT' && !$('#btnSair').classList.contains('hidden')) location.reload(); });
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await enterApp(session);
+  else { setSync('error'); $('#syncTxt').textContent = 'Faça login'; $('#auth').classList.remove('hidden'); }
 }
 boot();
 </script>
