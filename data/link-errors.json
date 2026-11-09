@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-08T17:54:45.104Z",
+  "generated_at": "2026-11-09T15:49:05.569Z",
   "checked": 147,
-  "broken": 18,
+  "broken": 15,
   "errors": [
     {
       "tag_id": "CBE_001",
@@ -13,18 +13,6 @@
       "tag_id": "CBE_002",
       "link_key": "0d88e3e49e",
       "motivo": "Falha: ENOTFOUND",
-      "desde": "2026-11-08T17:54:45.104Z"
-    },
-    {
-      "tag_id": "PVE_001",
-      "link_key": "ac3568a2bd",
-      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
-      "desde": "2026-11-08T17:54:45.104Z"
-    },
-    {
-      "tag_id": "PVE_002",
-      "link_key": "ac3568a2bd",
-      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
     },
     {
@@ -60,12 +48,6 @@
     {
       "tag_id": "PVE_012",
       "link_key": "ddc91a9d94",
-      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
-      "desde": "2026-11-08T17:54:45.104Z"
-    },
-    {
-      "tag_id": "PVE_015",
-      "link_key": "ac3568a2bd",
       "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
     },
