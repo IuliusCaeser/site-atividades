@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-13T14:23:27.821Z",
+  "generated_at": "2026-11-14T13:17:37.836Z",
   "checked": 147,
-  "broken": 16,
+  "broken": 15,
   "errors": [
     {
       "tag_id": "CBE_001",
@@ -14,12 +14,6 @@
       "link_key": "0d88e3e49e",
       "motivo": "Falha: ENOTFOUND",
       "desde": "2026-11-08T17:54:45.104Z"
-    },
-    {
-      "tag_id": "PVE_004",
-      "link_key": "d3a6df1e84",
-      "motivo": "Falha: ETIMEDOUT",
-      "desde": "2026-11-12T14:57:16.404Z"
     },
     {
       "tag_id": "PVE_005",
