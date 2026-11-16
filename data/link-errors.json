@@ -1,8 +1,26 @@
 {
-  "generated_at": "2026-11-15T13:46:27.105Z",
+  "generated_at": "2026-11-16T15:24:41.646Z",
   "checked": 147,
-  "broken": 15,
+  "broken": 18,
   "errors": [
+    {
+      "tag_id": "C_001",
+      "link_key": "5233f9d662",
+      "motivo": "Falha: tempo esgotado",
+      "desde": "2026-11-16T15:24:41.646Z"
+    },
+    {
+      "tag_id": "C_002",
+      "link_key": "5233f9d662",
+      "motivo": "Falha: tempo esgotado",
+      "desde": "2026-11-16T15:24:41.646Z"
+    },
+    {
+      "tag_id": "C_015",
+      "link_key": "aeb6c485af",
+      "motivo": "Falha: tempo esgotado",
+      "desde": "2026-11-16T15:24:41.646Z"
+    },
     {
       "tag_id": "CBE_001",
       "link_key": "806e632643",
