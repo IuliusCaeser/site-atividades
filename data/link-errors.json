@@ -1,26 +1,8 @@
 {
-  "generated_at": "2026-11-16T15:24:41.646Z",
+  "generated_at": "2026-11-17T15:47:23.926Z",
   "checked": 147,
-  "broken": 18,
+  "broken": 15,
   "errors": [
-    {
-      "tag_id": "C_001",
-      "link_key": "5233f9d662",
-      "motivo": "Falha: tempo esgotado",
-      "desde": "2026-11-16T15:24:41.646Z"
-    },
-    {
-      "tag_id": "C_002",
-      "link_key": "5233f9d662",
-      "motivo": "Falha: tempo esgotado",
-      "desde": "2026-11-16T15:24:41.646Z"
-    },
-    {
-      "tag_id": "C_015",
-      "link_key": "aeb6c485af",
-      "motivo": "Falha: tempo esgotado",
-      "desde": "2026-11-16T15:24:41.646Z"
-    },
     {
       "tag_id": "CBE_001",
       "link_key": "806e632643",
