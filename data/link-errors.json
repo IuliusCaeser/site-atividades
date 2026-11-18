@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-17T15:47:23.926Z",
+  "generated_at": "2026-11-18T15:27:56.746Z",
   "checked": 147,
-  "broken": 15,
+  "broken": 23,
   "errors": [
     {
       "tag_id": "CBE_001",
@@ -14,6 +14,12 @@
       "link_key": "0d88e3e49e",
       "motivo": "Falha: ENOTFOUND",
       "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVE_003",
+      "link_key": "ec55f24cd7",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
     },
     {
       "tag_id": "PVE_005",
@@ -52,6 +58,30 @@
       "desde": "2026-11-08T17:54:45.104Z"
     },
     {
+      "tag_id": "PVE_013",
+      "link_key": "53fdee85ca",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
+      "tag_id": "PVE_014",
+      "link_key": "ec55f24cd7",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
+      "tag_id": "PVP_001",
+      "link_key": "6b9b6b5802",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
+      "tag_id": "PVP_002",
+      "link_key": "f306fb8306",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
       "tag_id": "PVP_005",
       "link_key": "985e5cddf3",
       "motivo": "HTTP 404",
@@ -60,26 +90,44 @@
     {
       "tag_id": "PVP_010",
       "link_key": "1f82618e15",
-      "motivo": "Falha: tempo esgotado",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
     },
     {
       "tag_id": "PVP_011",
       "link_key": "1f82618e15",
-      "motivo": "Falha: tempo esgotado",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_012",
+      "link_key": "0c529b3913",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
     },
     {
       "tag_id": "PVP_015",
       "link_key": "3285673a45",
-      "motivo": "Falha: UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
     },
     {
       "tag_id": "PVP_016",
       "link_key": "683457fe88",
-      "motivo": "Falha: UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-08T17:54:45.104Z"
+    },
+    {
+      "tag_id": "PVP_017",
+      "link_key": "ff0e3966c1",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
+      "tag_id": "PVP_018",
+      "link_key": "ff0e3966c1",
+      "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
+      "desde": "2026-11-18T15:27:56.746Z"
     },
     {
       "tag_id": "SE_004",
