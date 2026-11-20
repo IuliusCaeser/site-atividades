@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-19T15:33:12.296Z",
+  "generated_at": "2026-11-20T15:12:26.672Z",
   "checked": 147,
-  "broken": 23,
+  "broken": 24,
   "errors": [
     {
       "tag_id": "CBE_001",
@@ -20,6 +20,12 @@
       "link_key": "ec55f24cd7",
       "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-18T15:27:56.746Z"
+    },
+    {
+      "tag_id": "PVE_004",
+      "link_key": "d3a6df1e84",
+      "motivo": "Falha: ETIMEDOUT",
+      "desde": "2026-11-20T15:12:26.672Z"
     },
     {
       "tag_id": "PVE_005",
