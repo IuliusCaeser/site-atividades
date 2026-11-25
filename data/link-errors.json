@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-24T17:21:52.953Z",
+  "generated_at": "2026-11-25T17:01:05.367Z",
   "checked": 147,
-  "broken": 27,
+  "broken": 24,
   "errors": [
     {
       "tag_id": "CBE_001",
@@ -88,18 +88,6 @@
       "desde": "2026-11-18T15:27:56.746Z"
     },
     {
-      "tag_id": "PVP_003",
-      "link_key": "123b26d3e9",
-      "motivo": "Falha: ETIMEDOUT",
-      "desde": "2026-11-24T17:21:52.953Z"
-    },
-    {
-      "tag_id": "PVP_004",
-      "link_key": "123b26d3e9",
-      "motivo": "Falha: ETIMEDOUT",
-      "desde": "2026-11-24T17:21:52.953Z"
-    },
-    {
       "tag_id": "PVP_005",
       "link_key": "985e5cddf3",
       "motivo": "HTTP 404",
@@ -122,12 +110,6 @@
       "link_key": "0c529b3913",
       "motivo": "Falha: UND_ERR_CONNECT_TIMEOUT",
       "desde": "2026-11-18T15:27:56.746Z"
-    },
-    {
-      "tag_id": "PVP_013",
-      "link_key": "123b26d3e9",
-      "motivo": "Falha: ETIMEDOUT",
-      "desde": "2026-11-24T17:21:52.953Z"
     },
     {
       "tag_id": "PVP_015",
